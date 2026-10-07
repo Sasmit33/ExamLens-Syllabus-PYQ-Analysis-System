@@ -3,7 +3,7 @@ ExamLens is a C++-based DSA and OOP project that analyzes subject syllabus and p
 # Architecture
 GUI → Application Layer (OOP services) → DSA Core → Data Layer (parsers + storage)
 Flow: Import Syllabus → Import PYQs → Validate → Analyze → Dashboard → Report
-🔄 Changes After Phase I
+# Changes After Phase I
 Interface: CLI output → interactive GUI dashboard
 Repetition: identical/similar wording → 4 classes (Exact, Normalized, Similar Pattern, Unique)
 Pattern analysis: questions grouped by underlying task (e.g. *BST Construction*), not just wording
