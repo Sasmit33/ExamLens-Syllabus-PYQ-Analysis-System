@@ -1,0 +1,26 @@
+# Format: QID | marks | question text     (blank marks field = missing)
+YEAR: 2022
+Q1a | 5 | Define data structure. Differentiate between linear and non-linear data structures.
+Q1b | 5 | Explain asymptotic notations with examples.
+Q2  | 10 | Write a C program to implement a stack using a linked list.
+Q3  | 10 | Construct a binary search tree for 45, 15, 79, 90, 10, 55 and give its inorder traversal.
+Q3-or | 10 | Explain AVL tree rotations with suitable examples.
+Q4  | 10 | Explain quick sort and analyse its time complexity.
+Q5  | 10 | Explain BFS and DFS graph traversal with an example.
+
+YEAR: 2023
+Q1a | 5 | What is a data structure? Differentiate linear and non-linear structures.
+Q1b | 5 | Convert the infix expression A+B*C-D to postfix using a stack.
+Q2  | 10 | Write the merge sort algorithm and trace it on 12, 11, 13, 5, 6, 7.
+Q3  | 10 | Construct an AVL tree by inserting 21, 26, 30, 9, 4, 14 showing all rotations.
+Q4  | 10 | Explain circular queue with insertion and deletion operations.
+Q4  | 10 | Explain circular queue with insertion and deletion operations.
+Q5  | 10 | Explain topological sort of a graph with an example.
+Q6  | 5
+
+YEAR: 2024
+Q1a | 5 | Define a data structure. Differentiate linear and non-linear structures.
+Q1b | 2 | What is the time complexity of binary search? Justify your answer.
+Q3   | 5 | Construct a BST for 50, 30, 70, 20, 40, 60, 80 and give its inorder traversal.
+Q3-or | 5 | Construct an AVL tree for 10, 20, 30, 40, 50 showing rotations.
+Q4  |   | Write the Merge Sort algorithm and show its working on 38, 27, 43, 3, 9.
