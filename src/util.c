@@ -75,3 +75,60 @@ int split_fields(char *line, char sep, char **fields, int max_fields)
     }
     return n;
 }
+
+void normalize_text(const char *in, char *out, size_t out_size)
+{
+    char tmp[MAX_LINE];
+    size_t j = 0;
+    int last_space = 1;
+
+    if (out_size == 0) return;
+
+    /* Pass 1: lowercase; every non [a-z0-9+] character becomes one space. */
+    for (size_t i = 0; in[i] && j < sizeof tmp - 1; i++) {
+        unsigned char c = (unsigned char)in[i];
+        if (isalnum(c) || c == '+') {
+            tmp[j++] = (char)tolower(c);
+            last_space = 0;
+        } else if (!last_space) {
+            tmp[j++] = ' ';
+            last_space = 1;
+        }
+    }
+    tmp[j] = '\0';
+
+    /* Pass 2: keep only tokens that contain a letter (drops "50", "38", "+"). */
+    size_t o = 0;
+    char *p = tmp;
+    while (*p) {
+        while (*p == ' ') p++;
+        if (!*p) break;
+        char *start = p;
+        int has_alpha = 0;
+        while (*p && *p != ' ') {
+            if (isalpha((unsigned char)*p)) has_alpha = 1;
+            p++;
+        }
+        size_t len = (size_t)(p - start);
+        if (!has_alpha) continue;
+        if (o + len + 2 > out_size) break;   /* truncate safely */
+        if (o > 0) out[o++] = ' ';
+        memcpy(out + o, start, len);
+        o += len;
+    }
+    out[o] = '\0';
+}
+
+int tokenize(char *s, char **tokens, int max_tokens)
+{
+    int n = 0;
+    char *p = s;
+    while (*p && n < max_tokens) {
+        while (*p == ' ') p++;
+        if (!*p) break;
+        tokens[n++] = p;
+        while (*p && *p != ' ') p++;
+        if (*p) *p++ = '\0';
+    }
+    return n;
+}
