@@ -1,9 +1,5 @@
 #ifndef ENGINE_H
 #define ENGINE_H
-
-/* Public backend API. Plain C with extern "C" guards so the Qt (C++) dashboard
-   can include this header and call the functions directly. */
-
 #include "common.h"
 #include "editdist.h"
 #include "graph.h"
@@ -65,19 +61,19 @@ typedef struct {         /* multi-word keyword, searched with KMP           */
 typedef struct {
     Question *q;   int nq, capq;
     Topic    *t;   int nt, capt;
-    Phrase   *ph;  int nph, capph;      /* sorted longest first after load */
-    char    **words; int nwords, capwords; /* single-word keywords (fuzzy fallback) */
+    Phrase   *ph;  int nph, capph;      
+    char    **words; int nwords, capwords;
 
-    HashMap  *alias;        /* "bst" -> "binary search tree"   */
-    HashMap  *topic_index;  /* normalized topic name -> index  */
-    HashMap  *stopwords;    /* set used by repetition detection */
-    TrieNode *trie;         /* single-word keywords -> topics  */
-    Graph    *prereq;       /* topic prerequisite DAG          */
-    IntQueue  review;       /* question indices needing review */
+    HashMap  *alias;       
+    HashMap  *topic_index;  
+    HashMap  *stopwords;   
+    TrieNode *trie;         
+    Graph    *prereq;      
+    IntQueue  review;       
 
     int  ngroups;
     int *group_size;
-    int *group_years;       /* distinct years in each group    */
+    int *group_years;      
 
     int *study_order;
     int  nstudy;
@@ -87,26 +83,20 @@ typedef struct {
     char **issues; int nissues, capissues;
     int n_missing_marks, n_missing_year, n_duplicates, n_malformed;
 } Engine;
-
-/* lifecycle */
 Engine *engine_create(void);
 void    engine_free(Engine *e);
 void    engine_add_issue(Engine *e, const char *fmt, ...) PRINTF_LIKE(2, 3);
 void    engine_normalize(const Engine *e, const char *raw, char *out, size_t out_size);
-
-/* loading (parser.c) - load the syllabus FIRST: it defines aliases and topics */
 int engine_load_syllabus(Engine *e, const char *path);
 int engine_load_questions(Engine *e, const char *path);
 int engine_load_prereqs(Engine *e, const char *path);
-
-/* pipeline stages, run in this order */
-void   engine_validate(Engine *e);                      /* validate.c   */
-void   engine_map_topics(Engine *e);                    /* mapper.c     */
-void   engine_set_topic(Engine *e, int question, int topic); /* manual review fix */
-void   engine_detect_repetition(Engine *e);             /* repetition.c */
-void   engine_compute_analytics(Engine *e, int upto_year); /* analytics.c */
+void   engine_validate(Engine *e);                   
+void   engine_map_topics(Engine *e);                  
+void   engine_set_topic(Engine *e, int question, int topic); 
+void   engine_detect_repetition(Engine *e);            
+void   engine_compute_analytics(Engine *e, int upto_year);
 int    engine_rank_topics(const Engine *e, int by_marks_only, int *out);
-int    engine_study_order(Engine *e);                   /* 0 if a cycle blocked it */
+int    engine_study_order(Engine *e);                 
 double engine_backtest(Engine *e, int test_year, int k, double *baseline);
 
 #ifdef __cplusplus
