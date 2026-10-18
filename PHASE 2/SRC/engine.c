@@ -4,9 +4,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-/* Ignored when comparing questions for repetition: question verbs and filler
-   words differ between years even when the question is the same. */
 static const char *STOPWORDS[] = {
     "a", "an", "the", "of", "and", "or", "for", "to", "in", "on", "at", "is",
     "are", "be", "it", "its", "with", "by", "from", "as", "this", "that",
@@ -40,8 +37,6 @@ void engine_add_issue(Engine *e, const char *fmt, ...)
     e->issues[e->nissues++] = xstrdup(buf);
 }
 
-/* normalize_text + replace each word that has an alias by its expansion.
-   Applied identically to questions, keywords and topic names, so they match. */
 void engine_normalize(const Engine *e, const char *raw, char *out, size_t out_size)
 {
     char base[MAX_TEXT];
