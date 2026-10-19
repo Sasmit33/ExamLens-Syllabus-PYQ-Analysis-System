@@ -1,0 +1,36 @@
+# SAMPLE syllabus - replace with your real one.
+# ALIAS: one word = its full form. Applied to questions AND keywords.
+# TOPIC: Name | keyword, keyword phrase, ...   (the name is a keyword too)
+ALIAS: bst = binary search tree
+ALIAS: bfs = breadth first search
+ALIAS: dfs = depth first search
+ALIAS: sll = singly linked list
+ALIAS: dll = doubly linked list
+ALIAS: mergesort = merge sort
+ALIAS: quicksort = quick sort
+ALIAS: inorder = in order
+ALIAS: preorder = pre order
+ALIAS: postorder = post order
+
+UNIT: 1
+TOPIC: Introduction to data structures | data structure, data structures, linear, non linear, abstract data type, adt
+TOPIC: Complexity analysis | time complexity, space complexity, big o, asymptotic, complexity
+TOPIC: Arrays | array, arrays, two dimensional array, sparse matrix
+
+UNIT: 2
+TOPIC: Linked lists | linked list, singly linked list, doubly linked list, circular linked list
+TOPIC: Stacks | stack, push, pop, infix, postfix, prefix, expression evaluation
+TOPIC: Queues | queue, circular queue, deque, enqueue, dequeue, priority queue
+
+UNIT: 3
+TOPIC: Searching | binary search, linear search, searching, hashing
+TOPIC: Sorting | sort, sorting, bubble sort, insertion sort, selection sort, merge sort, quick sort, heap sort
+
+UNIT: 4
+TOPIC: Trees and traversals | tree, binary tree, traversal, in order, pre order, post order
+TOPIC: Binary search trees | binary search tree
+TOPIC: AVL trees | avl, avl tree, rotation, rotations, balance factor, height balanced
+TOPIC: Heaps | heap, max heap, min heap, heapify
+
+UNIT: 5
+TOPIC: Graphs | graph, graphs, adjacency matrix, adjacency list, breadth first search, depth first search, spanning tree, shortest path, dijkstra, topological sort
