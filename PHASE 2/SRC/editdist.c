@@ -10,14 +10,6 @@ static int min3(int a, int b, int c)
     return m < c ? m : c;
 }
 
-/*
- * dp[i][j] = distance between first i units of a and first j units of b
- * dp[i][j] = min(dp[i-1][j] + 1,          delete a[i-1]
- *                dp[i][j-1] + 1,          insert b[j-1]
- *                dp[i-1][j-1] + cost)     substitute (cost 0 if equal)
- * Only the previous row is needed, so two rows of size m+1 suffice.
- */
-
 int edit_distance_str(const char *a, const char *b)
 {
     int n = (int)strlen(a), m = (int)strlen(b);
