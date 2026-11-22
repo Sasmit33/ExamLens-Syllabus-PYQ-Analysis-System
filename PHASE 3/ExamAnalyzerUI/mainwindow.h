@@ -27,6 +27,7 @@ public:
 
 private slots:
     void runAnalysis();
+    void importPdfs(const QStringList &dropped = {});
     void applyQuestionFilter();
     void onReviewSelectionChanged();
     void assignSelectedTopic();
