@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exam Question Analyzer</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 rx=%223%22 fill=%22%231B2A49%22/%3E%3C/svg%3E">
+<style>
+:root {
+  --paper: #FBFBF8; --panel: #FFFFFF; --ink: #1B2A49; --ink-soft: #55607A;
+  --rule: #D6DEEA; --rule-strong: #B7C3D6; --red-pen: #C0392B; --red-wash: #FBECEA;
+  --tick: #2E7D5B; --tick-wash: #E6F3EC; --bar: #3E5C99;
+  --serif: Georgia, "Times New Roman", serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #121826; --panel: #182033; --ink: #E7ECF5; --ink-soft: #A3AEC4;
+    --rule: #2A3550; --rule-strong: #3B4866; --red-pen: #F08A7E; --red-wash: #3A2025;
+    --tick: #7CCBA2; --tick-wash: #1D3229; --bar: #7E9BDA;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.55 var(--sans); }
+button, select, input { font: inherit; color: inherit; }
+button { background: var(--panel); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 7px 14px; cursor: pointer; }
+button:hover { border-color: var(--ink-soft); }
+button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+:focus-visible { outline: 2px solid var(--bar); outline-offset: 2px; }
+input, select { background: var(--panel); border: 1px solid var(--rule-strong); border-radius: 6px; padding: 7px 10px; }
+
+.app { display: grid; grid-template-columns: 220px minmax(0, 1fr); min-height: 100vh; }
+nav { border-right: 1px solid var(--rule); padding: 24px 14px; position: sticky; top: 0; height: 100vh; }
+nav h1 { font: 600 19px/1.25 var(--serif); margin: 0 6px 22px; }
+nav button { display: flex; justify-content: space-between; width: 100%; text-align: left; border: 0; background: none; padding: 8px 10px; border-radius: 6px; margin-bottom: 2px; }
+nav button[aria-selected="true"] { background: var(--panel); box-shadow: inset 3px 0 0 var(--ink); font-weight: 600; }
+.badge { font-size: 12px; min-width: 22px; text-align: center; border-radius: 10px; padding: 0 7px; background: var(--red-wash); color: var(--red-pen); }
+.badge.done { background: var(--tick-wash); color: var(--tick); }
+main { padding: 28px 36px 60px; max-width: 1150px; }
+main h2 { font: 600 24px/1.25 var(--serif); margin: 0 0 6px; }
+.lede { color: var(--ink-soft); margin: 0 0 22px; max-width: 70ch; }
+.error { border: 1px solid var(--red-pen); background: var(--red-wash); color: var(--red-pen); padding: 12px 16px; border-radius: 6px; margin-bottom: 18px; white-space: pre-wrap; }
+
+.stats { display: flex; flex-wrap: wrap; gap: 28px; margin: 0 0 28px; padding-bottom: 20px; border-bottom: 1px solid var(--rule); }
+.stats div span { display: block; font: 600 26px/1.1 var(--serif); }
+.stats div { color: var(--ink-soft); font-size: 13px; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 32px; }
+h3 { font: 600 16px/1.3 var(--sans); margin: 0 0 12px; }
+
+table { width: 100%; border-collapse: collapse; }
+th { text-align: left; font-weight: 600; font-size: 13px; color: var(--ink-soft); padding: 8px 10px; border-bottom: 1px solid var(--rule-strong); cursor: pointer; user-select: none; white-space: nowrap; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+td.num { text-align: right; font-variant-numeric: tabular-nums; }
+tr.flag td { background: var(--red-wash); }
+tr.clickable { cursor: pointer; }
+tr.clickable:hover td { background: var(--panel); }
+.qtext { font-family: var(--serif); }
+.marks { display: inline-block; min-width: 30px; text-align: center; border: 1px solid var(--rule-strong); border-radius: 4px; font-size: 13px; padding: 0 5px; }
+.marks.missing { border-color: var(--red-pen); color: var(--red-pen); }
+.tag { font-size: 12px; border-radius: 4px; padding: 1px 7px; margin-right: 4px; white-space: nowrap; border: 1px solid var(--rule-strong); color: var(--ink-soft); }
+.tag.red { border-color: var(--red-pen); color: var(--red-pen); }
+
+.barcell { display: flex; align-items: center; gap: 10px; min-width: 200px; }
+.bar { flex: 1; height: 10px; background: var(--rule); border-radius: 5px; overflow: hidden; }
+.bar i { display: block; height: 100%; background: var(--bar); }
+.toolbar { display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+.toolbar input { flex: 1; min-width: 220px; }
+
+.split { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 28px; align-items: start; }
+.list { border-top: 1px solid var(--rule); }
+.list button { display: block; width: 100%; text-align: left; border: 0; border-bottom: 1px solid var(--rule); border-radius: 0; background: none; padding: 10px 8px; }
+.list button[aria-current="true"] { background: var(--panel); box-shadow: inset 3px 0 0 var(--ink); }
+.list small { display: block; color: var(--ink-soft); font-size: 12px; }
+.sheet { background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; padding: 22px 26px; }
+.sheet .q { font: 18px/1.6 var(--serif); margin: 10px 0 16px; }
+.sheet .meta { color: var(--ink-soft); font-size: 13px; }
+.guess { border-left: 3px solid var(--red-pen); padding: 4px 12px; margin: 14px 0 18px; color: var(--red-pen); background: var(--panel); }
+.actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.actions select { min-width: 240px; }
+.empty { color: var(--ink-soft); padding: 18px 0; }
+.levels + .levels { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--rule); }
+.levels h4 { margin: 14px 0 6px; font-size: 13px; color: var(--ink-soft); font-weight: 600; }
+.levels ul { margin: 0; padding-left: 18px; }
+.warn { color: var(--red-pen); margin-bottom: 14px; }
+.group { border-left: 3px solid var(--bar); padding: 4px 0 4px 16px; margin-bottom: 22px; }
+.group p { margin: 4px 0; }
+ol.order { margin: 0; padding-left: 26px; }
+ol.order li button { border: 0; background: none; padding: 5px 4px; text-align: left; width: 100%; }
+ol.order li button[aria-current="true"] { font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+section[hidden] { display: none; }
+@media (max-width: 860px) {
+  .app { grid-template-columns: 1fr; }
+  nav { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--rule); }
+  .two, .split { grid-template-columns: 1fr; }
+  main { padding: 22px 18px 40px; }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bar i { transition: width .4s ease-out; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav aria-label="Sections">
+    <h1>Exam Question Analyzer</h1>
+    <div role="tablist" id="tabs"></div>
+  </nav>
+  <main>
+    <div id="error" class="error" hidden></div>
+
+    <section id="overview">
+      <h2>Overview</h2>
+      <p class="lede" id="overview-lede">Loading the analysis...</p>
+      <div class="stats" id="stats"></div>
+      <div class="two">
+        <div><h3>Highest priority topics</h3><div id="top-topics"></div></div>
+        <div><h3>Start studying here</h3><ol class="order" id="first-steps"></ol></div>
+      </div>
+    </section>
+
+    <section id="questions" hidden>
+      <h2>Questions</h2>
+      <p class="lede">Every question from the past papers and the topic it was matched to. Click a column heading to sort. Highlighted rows need review.</p>
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="Search text, topic or question id" aria-label="Search questions">
+        <select id="filter" aria-label="Filter questions">
+          <option value="all">All questions</option>
+          <option value="review">Needs review</option>
+          <option value="none">No topic</option>
+          <option value="nomarks">Missing marks</option>
+        </select>
+      </div>
+      <table><thead><tr id="q-head"></tr></thead><tbody id="q-body"></tbody></table>
+    </section>
+
+    <section id="review" hidden>
+      <h2>Review queue</h2>
+      <p class="lede">The program wasn't confident about these questions. They're listed in the order they were flagged. Each decision is saved and immediately updates priorities and the study plan.</p>
+      <div class="split">
+        <div><div class="list" id="review-list"></div>
+          <p><button id="reset-reviews">Clear all saved decisions</button></p></div>
+        <div id="review-detail"></div>
+      </div>
+    </section>
+
+    <section id="priority" hidden>
+      <h2>Topic priority</h2>
+      <p class="lede" id="backtest"></p>
+      <table><thead><tr><th>Rank</th><th>Topic</th><th>Priority</th><th class="num">Marks</th><th class="num">Years asked</th><th class="num">Last asked</th><th class="num">Repeats</th></tr></thead>
+        <tbody id="p-body"></tbody></table>
+    </section>
+
+    <section id="study" hidden>
+      <h2>Study plan</h2>
+      <p class="lede">Prerequisites always come first. Among topics you're ready for, the higher priority comes first. Select a topic to see what it depends on.</p>
+      <div class="warn" id="cycle" hidden></div>
+      <div class="split">
+        <ol class="order" id="study-list"></ol>
+        <div id="study-detail"></div>
+      </div>
+    </section>
+
+    <section id="repeats" hidden>
+      <h2>Repeated questions</h2>
+      <p class="lede">Questions asked again in different years, after ignoring wording like "explain" or "define".</p>
+      <div id="groups"></div>
+    </section>
+
+    <section id="issues" hidden>
+      <h2>Data issues</h2>
+      <p class="lede">Problems found in the input files. Fix them in the .txt files and reload this page.</p>
+      <ul id="issue-list"></ul>
+    </section>
+  </main>
+</div>
+
+<script>
+const VIEWS = [
+  ["overview", "Overview"], ["questions", "Questions"], ["review", "Review queue"],
+  ["priority", "Priority"], ["study", "Study plan"], ["repeats", "Repeated questions"], ["issues", "Data issues"]
+];
+let A = null;
+let view = "overview";
+let reviewSel = null;
+let studySel = null;
+let sort = { key: "year", dir: 1 };
+
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k === "text") el.textContent = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const kid of kids.flat()) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+const $ = (id) => document.getElementById(id);
+const topicName = (t) => (t === null || t === undefined) ? "No topic" : A.topics[t].name;
+const pct = (x) => Math.round(x * 100) + "%";
+
+function showError(msg) { const e = $("error"); e.textContent = msg; e.hidden = !msg; }
+
+async function call(url, body) {
+  try {
+    const res = await fetch(url, body === undefined ? {} : {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.error) {
+      showError(data.error + (data.issues ? "\n" + data.issues.join("\n") : "") + (data.details ? "\n" + data.details : ""));
+      return;
+    }
+    showError("");
+    A = data;
+    render();
+  } catch (err) {
+    showError("Can't reach the local server. Make sure 'python server.py' is still running, then reload.");
+  }
+}
+
+function go(name) { view = name; renderTabs(); for (const [id] of VIEWS) $(id).hidden = id !== view; window.scrollTo(0, 0); }
+
+function renderTabs() {
+  const box = $("tabs"); box.replaceChildren();
+  for (const [id, label] of VIEWS) {
+    let badge = null;
+    if (A && id === "review") badge = h("span", { class: "badge" + (A.review.length ? "" : " done"), text: A.review.length || "done" });
+    if (A && id === "issues" && A.issues.length) badge = h("span", { class: "badge", text: A.issues.length });
+    box.append(h("button", { role: "tab", "aria-selected": String(id === view), onclick: () => go(id) }, label, badge));
+  }
+}
+
+function render() {
+  renderTabs(); renderOverview(); renderQuestions(); renderReview();
+  renderPriority(); renderStudy(); renderRepeats(); renderIssues();
+}
+
+function barCell(value) {
+  return h("div", { class: "barcell" },
+    h("div", { class: "bar" }, h("i", { style: "width:" + Math.round(value * 100) + "%" })),
+    h("span", { text: value.toFixed(3) }));
+}
+
+function renderOverview() {
+  const s = A.summary;
+  $("overview-lede").textContent = s.questions + " questions from " + s.min_year + " to " + s.max_year +
+    ", matched against " + s.topics + " syllabus topics.";
+  $("stats").replaceChildren(
+    h("div", {}, h("span", { text: s.questions }), "questions"),
+    h("div", {}, h("span", { text: s.topics }), "topics"),
+    h("div", {}, h("span", { text: A.repeat_groups.length }), "repeated questions"),
+    h("div", {}, h("span", { text: s.pending_review }), "waiting for review"),
+    h("div", {}, h("span", { text: A.issues.length }), "data issues"));
+  $("top-topics").replaceChildren(...A.ranking.slice(0, 6).map((t) =>
+    h("div", { style: "margin-bottom:10px" }, h("div", { text: A.topics[t].name }), barCell(A.topics[t].priority))));
+  $("first-steps").replaceChildren(...A.study_order.slice(0, 6).map((t) => h("li", {}, h("button", {
+    onclick: () => { studySel = t; renderStudy(); go("study"); } }, A.topics[t].name))));
+}
+
+function questionRows() {
+  const q = $("search").value.trim().toLowerCase();
+  const f = $("filter").value;
+  let rows = A.questions.filter((x) => !x.duplicate);
+  if (f === "review") rows = rows.filter((x) => x.needs_review);
+  if (f === "none") rows = rows.filter((x) => x.topic === null);
+  if (f === "nomarks") rows = rows.filter((x) => x.marks === null);
+  if (q) rows = rows.filter((x) => (x.text + " " + x.qid + " " + topicName(x.topic) + " " + x.year).toLowerCase().includes(q));
+  const key = {
+    year: (x) => x.year ?? -1, qid: (x) => x.qid, marks: (x) => x.marks ?? -1,
+    topic: (x) => topicName(x.topic), confidence: (x) => x.confidence, text: (x) => x.text
+  }[sort.key];
+  return rows.sort((a, b) => (key(a) > key(b) ? 1 : key(a) < key(b) ? -1 : a.id - b.id) * sort.dir);
+}
+
+function renderQuestions() {
+  const cols = [["year", "Year"], ["qid", "Id"], ["marks", "Marks"], ["topic", "Topic"], ["confidence", "Confidence"], ["text", "Question"]];
+  $("q-head").replaceChildren(...cols.map(([k, label]) => h("th", {
+    "aria-sort": sort.key === k ? (sort.dir > 0 ? "ascending" : "descending") : null,
+    onclick: () => { sort = { key: k, dir: sort.key === k ? -sort.dir : 1 }; renderQuestions(); }
+  }, label + (sort.key === k ? (sort.dir > 0 ? " \u25B2" : " \u25BC") : ""))));
+  const rows = questionRows();
+  $("q-body").replaceChildren(...rows.map((x) => h("tr", {
+    class: (x.needs_review ? "flag clickable" : ""),
+    onclick: x.needs_review ? () => { reviewSel = x.id; renderReview(); go("review"); } : null,
+    title: x.needs_review ? "Click to review this question" : null
+  },
+    h("td", { text: x.year ?? "-" }),
+    h("td", { text: x.qid }),
+    h("td", {}, h("span", { class: "marks" + (x.marks === null ? " missing" : ""), text: x.marks ?? "?" })),
+    h("td", {}, topicName(x.topic), x.or_pair ? h("span", { class: "tag", style: "margin-left:6px", text: "OR choice" }) : null),
+    h("td", { class: "num" }, x.needs_review ? h("span", { class: "tag red", text: "review" }) : null, x.confidence.toFixed(2)),
+    h("td", { class: "qtext", text: x.text }))));
+  if (!rows.length) $("q-body").append(h("tr", {}, h("td", { colspan: 6, class: "empty", text: "No questions match this search." })));
+}
+
+function renderReview() {
+  const list = $("review-list");
+  if (!A.review.includes(reviewSel)) reviewSel = A.review.length ? A.review[0] : null;
+  list.replaceChildren(...A.review.map((id, i) => {
+    const x = A.questions[id];
+    return h("button", { "aria-current": String(id === reviewSel), onclick: () => { reviewSel = id; renderReview(); } },
+      h("small", { text: (i + 1) + ". " + x.year + " " + x.qid + ", best guess " + topicName(x.topic) }),
+      x.text.length > 90 ? x.text.slice(0, 90) + "..." : x.text);
+  }));
+  const d = $("review-detail");
+  if (reviewSel === null) {
+    d.replaceChildren(h("div", { class: "sheet" }, h("p", { class: "q", text: "Every flagged question has been reviewed." }),
+      h("p", { class: "meta", text: "Priorities and the study plan now use your decisions." })));
+    return;
+  }
+  const x = A.questions[reviewSel];
+  const select = h("select", { "aria-label": "Correct topic" },
+    ...A.topics.map((t) => h("option", { value: t.id, selected: t.id === x.topic }, t.name)));
+  const decide = (topicId) => {
+    const pos = A.review.indexOf(reviewSel);
+    call("/api/review", { year: x.year, qid: x.qid, topic: topicId === null ? null : A.topics[topicId].name })
+      .then(() => { if (A && A.review.length) reviewSel = A.review[Math.min(pos, A.review.length - 1)]; renderReview(); });
+  };
+  d.replaceChildren(h("div", { class: "sheet" },
+    h("div", { class: "meta" }, x.year + "  " + x.qid + "  ", h("span", { class: "marks" + (x.marks === null ? " missing" : ""), text: (x.marks ?? "?") + " marks" })),
+    h("p", { class: "q", text: x.text }),
+    h("div", { class: "guess", text: "Best guess: " + topicName(x.topic) + " (confidence " + x.confidence.toFixed(2) + ", score " + x.score.toFixed(1) + ")" }),
+    h("div", { class: "actions" }, select,
+      h("button", { class: "primary", onclick: () => decide(Number(select.value)) }, "Assign topic"),
+      h("button", { onclick: () => decide(x.topic) }, "Accept best guess"),
+      h("button", { onclick: () => decide(null) }, "No topic"))));
+}
+
+function renderPriority() {
+  const b = A.backtest;
+  $("backtest").textContent = b.score === null
+    ? "Ranked by marks, how often and how recently each topic was asked, and how often its questions repeat."
+    : "Check against the latest paper: trained on " + A.summary.min_year + " to " + (A.summary.max_year - 1) +
+      ", the top " + b.top_k + " topics covered " + pct(b.score) + " of " + A.summary.max_year +
+      "'s marks. Ranking by past marks alone covered " + pct(b.baseline) + ". With few years of data, treat this as a rough check.";
+  $("p-body").replaceChildren(...A.ranking.map((t, i) => {
+    const tp = A.topics[t];
+    return h("tr", { class: "clickable", title: "Show prerequisites", onclick: () => { studySel = t; renderStudy(); go("study"); } },
+      h("td", { text: i + 1 }), h("td", {}, tp.name, tp.years === 0 ? h("span", { class: "tag", style: "margin-left:6px", text: "not in past papers" }) : null),
+      h("td", {}, barCell(tp.priority)), h("td", { class: "num", text: tp.marks.toFixed(1) }),
+      h("td", { class: "num", text: tp.years }), h("td", { class: "num", text: tp.last_year ?? "never" }),
+      h("td", { class: "num", text: tp.repeats.toFixed(1) }));
+  }));
+}
+
+function levelBlock(title, pairs, word, emptyText) {
+  if (!pairs.length) return h("div", { class: "levels" }, h("h3", { text: title }), h("p", { class: "empty", text: emptyText }));
+  const byLevel = {};
+  for (const [t, lvl] of pairs) (byLevel[lvl] = byLevel[lvl] || []).push(t);
+  return h("div", { class: "levels" }, h("h3", { text: title }),
+    ...Object.keys(byLevel).map((lvl) => h("div", {},
+      h("h4", { text: lvl + (lvl === "1" ? " step " : " steps ") + word }),
+      h("ul", {}, ...byLevel[lvl].map((t) => h("li", { text: A.topics[t].name }))))));
+}
+
+function renderStudy() {
+  const cyc = $("cycle");
+  cyc.hidden = A.study_complete;
+  cyc.textContent = A.study_complete ? "" : "Only " + A.study_order.length + " of " + A.topics.length +
+    " topics could be ordered because the prerequisites contain a cycle. See Data issues.";
+  if (studySel === null || !A.topics[studySel]) studySel = A.study_order[0] ?? null;
+  $("study-list").replaceChildren(...A.study_order.map((t) => h("li", {},
+    h("button", { "aria-current": String(t === studySel), onclick: () => { studySel = t; renderStudy(); } },
+      A.topics[t].name + "  (" + A.topics[t].priority.toFixed(3) + ")"))));
+  if (studySel === null) { $("study-detail").replaceChildren(); return; }
+  const tp = A.topics[studySel];
+  $("study-detail").replaceChildren(h("div", { class: "sheet" },
+    h("p", { class: "q", text: tp.name }),
+    h("p", { class: "meta", text: "Priority " + tp.priority.toFixed(3) + ", asked in " + tp.years + " year(s), last asked " + (tp.last_year ?? "never") }),
+    levelBlock("Study these first", tp.before, "back", "No prerequisites. You can start here."),
+    levelBlock("This topic leads to", tp.after, "ahead", "No later topics depend on this one.")));
+}
+
+function renderRepeats() {
+  const box = $("groups");
+  if (!A.repeat_groups.length) { box.replaceChildren(h("p", { class: "empty", text: "No repeated questions found." })); return; }
+  box.replaceChildren(...A.repeat_groups.map((g, i) => h("div", { class: "group" },
+    h("h3", { text: "Asked in " + g.years + " different years" }),
+    ...g.questions.map((id) => { const x = A.questions[id];
+      return h("p", {}, h("span", { class: "tag", text: x.year + " " + x.qid }), h("span", { class: "qtext", text: x.text })); }))));
+}
+
+function renderIssues() {
+  $("issue-list").replaceChildren(...(A.issues.length ? A.issues : ["No problems found in the input files."]).map((t) => h("li", { text: t })));
+}
+
+$("search").addEventListener("input", renderQuestions);
+$("filter").addEventListener("change", renderQuestions);
+$("reset-reviews").addEventListener("click", () => {
+  if (confirm("Clear every saved review decision? The program's original guesses will be used again.")) call("/api/reviews/reset", {});
+});
+renderTabs();
+call("/api/analysis");
+</script>
+</body>
+</html>

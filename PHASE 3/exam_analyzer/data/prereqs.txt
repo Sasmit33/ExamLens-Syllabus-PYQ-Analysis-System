@@ -1,0 +1,17 @@
+
+Introduction to data structures -> Arrays
+Introduction to data structures -> Complexity analysis
+Complexity analysis -> Searching
+Complexity analysis -> Sorting
+Arrays -> Searching
+Arrays -> Sorting
+Arrays -> Linked lists
+Linked lists -> Stacks
+Linked lists -> Queues
+Linked lists -> Trees and traversals
+Trees and traversals -> Binary search trees
+Searching -> Binary search trees
+Binary search trees -> AVL trees
+Trees and traversals -> Heaps
+Queues -> Graphs
+Stacks -> Graphs

@@ -1,0 +1,103 @@
+
+=== Summary ===
+Questions : 19 loaded, years 2022-2024
+Syllabus  : 13 topics, 47 keyword phrases (KMP), 33 single keywords (Trie)
+Data      : 1 missing marks, 0 missing year, 1 duplicates, 1 malformed lines
+
+=== Validation and load issues ===
+- line 19: expected 'QID | marks | text', found 2 field(s)
+- line 17 (Q4): duplicate of line 16 - ignored
+- line 26 (Q4): missing marks - excluded from marks totals
+
+=== Question -> topic mapping ===
+Year  QID    Topic                      Score  Conf  Flags
+2022  Q1a    Introduction to data struc   7.0  1.00  
+2022  Q1b    Complexity analysis          1.0  1.00  
+2022  Q2     Linked lists                 2.0  0.67  REVIEW 
+2022  Q3     Trees and traversals         3.0  0.50  REVIEW or-pair 
+2022  Q3-or  AVL trees                    3.0  1.00  or-pair 
+2022  Q4     Complexity analysis          2.0  0.50  REVIEW 
+2022  Q5     Graphs                       7.0  0.88  
+2023  Q1a    Introduction to data struc   5.0  1.00  
+2023  Q1b    Stacks                       3.0  1.00  
+2023  Q2     Sorting                      2.0  1.00  
+2023  Q3     AVL trees                    3.0  1.00  
+2023  Q4     Queues                       2.0  1.00  
+2023  Q5     Graphs                       3.0  1.00  
+2024  Q1a    Introduction to data struc   5.0  1.00  
+2024  Q1b    Complexity analysis          2.0  0.50  REVIEW 
+2024  Q3     Trees and traversals         3.0  0.50  REVIEW or-pair 
+2024  Q3-or  AVL trees                    3.0  1.00  or-pair 
+2024  Q4     Sorting                      2.0  1.00  no-marks
+
+=== Review queue (FIFO, low confidence) ===
+ 1. [2022 Q2] best guess: Linked lists (conf 0.67)
+    Write a C program to implement a stack using a linked list.
+ 2. [2022 Q3] best guess: Trees and traversals (conf 0.50)
+    Construct a binary search tree for 45, 15, 79, 90, 10, 55 and give its inorder traversal.
+ 3. [2022 Q4] best guess: Complexity analysis (conf 0.50)
+    Explain quick sort and analyse its time complexity.
+ 4. [2024 Q1b] best guess: Complexity analysis (conf 0.50)
+    What is the time complexity of binary search? Justify your answer.
+ 5. [2024 Q3] best guess: Trees and traversals (conf 0.50)
+    Construct a BST for 50, 30, 70, 20, 40, 60, 80 and give its inorder traversal.
+
+=== Repeated questions (asked in 2+ years) ===
+Group 1 - 3 years:
+   2022 Q1a    Define data structure. Differentiate between linear and non-linear data structur
+   2023 Q1a    What is a data structure? Differentiate linear and non-linear structures.
+   2024 Q1a    Define a data structure. Differentiate linear and non-linear structures.
+Group 2 - 2 years:
+   2022 Q3     Construct a binary search tree for 45, 15, 79, 90, 10, 55 and give its inorder t
+   2024 Q3     Construct a BST for 50, 30, 70, 20, 40, 60, 80 and give its inorder traversal.
+Group 3 - 3 years:
+   2022 Q3-or  Explain AVL tree rotations with suitable examples.
+   2023 Q3     Construct an AVL tree by inserting 21, 26, 30, 9, 4, 14 showing all rotations.
+   2024 Q3-or  Construct an AVL tree for 10, 20, 30, 40, 50 showing rotations.
+Group 4 - 2 years:
+   2023 Q2     Write the merge sort algorithm and trace it on 12, 11, 13, 5, 6, 7.
+   2024 Q4     Write the Merge Sort algorithm and show its working on 38, 27, 43, 3, 9.
+
+=== Topic priority ranking (max-heap) ===
+Rank Topic                          Priority   Marks Years  Last
+1    Introduction to data structure    0.912    15.0     3  2024
+2    AVL trees                         0.890    17.5     3  2024
+3    Sorting                           0.675    10.0     2  2024
+4    Complexity analysis               0.664    17.0     2  2024
+5    Graphs                            0.650    20.0     2  2023
+6    Trees and traversals              0.565     7.5     2  2024
+7    Queues                            0.392    10.0     1  2023
+8    Linked lists                      0.325    10.0     1  2022
+9    Stacks                            0.304     5.0     1  2023
+10   Arrays                            0.000     0.0     0     -
+11   Searching                         0.000     0.0     0     -
+12   Binary search trees               0.000     0.0     0     -
+13   Heaps                             0.000     0.0     0     -
+
+=== Study order (topological sort with priority heap) ===
+ 1. Introduction to data structures priority 0.912
+ 2. Complexity analysis            priority 0.664   after: Introduction to data structures
+ 3. Arrays                         priority 0.000   after: Introduction to data structures
+ 4. Sorting                        priority 0.675   after: Complexity analysis, Arrays
+ 5. Linked lists                   priority 0.325   after: Arrays
+ 6. Trees and traversals           priority 0.565   after: Linked lists
+ 7. Queues                         priority 0.392   after: Linked lists
+ 8. Stacks                         priority 0.304   after: Linked lists
+ 9. Graphs                         priority 0.650   after: Stacks, Queues
+10. Searching                      priority 0.000   after: Complexity analysis, Arrays
+11. Binary search trees            priority 0.000   after: Searching, Trees and traversals
+12. AVL trees                      priority 0.890   after: Binary search trees
+13. Heaps                          priority 0.000   after: Trees and traversals
+
+=== BFS: prerequisites of the highest-priority topic that has any ===
+Before "AVL trees" you need:
+  1 step(s) back: Binary search trees;
+  2 step(s) back: Searching; Trees and traversals;
+  3 step(s) back: Complexity analysis; Arrays; Linked lists;
+  4 step(s) back: Introduction to data structures;
+
+=== Backtest ===
+Trained on 2022-2023, tested on 2024.
+Top-3 topics by priority cover 62% of 2024's marks;
+top-3 by past marks alone (baseline) cover 38%.
+With few years of data this is a sanity check, not proof.
