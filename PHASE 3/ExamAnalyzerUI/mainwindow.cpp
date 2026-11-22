@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "graphview.h"
+#include "pdfimportdialog.h"
 #include "prioritychart.h"
 
 #include <QAction>
@@ -121,6 +122,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     QAction *runAction = bar->addAction("Run analysis");
     runAction->setShortcut(QKeySequence("Ctrl+R"));
     connect(runAction, &QAction::triggered, this, &MainWindow::runAnalysis);
+    QAction *pdfAction = bar->addAction("Import PDFs");
+    pdfAction->setShortcut(QKeySequence("Ctrl+I"));
+    connect(pdfAction, &QAction::triggered, this, [this] { importPdfs(); });
     QAction *darkAction = bar->addAction("Dark mode");
     darkAction->setCheckable(true);
     darkAction->setShortcut(QKeySequence("Ctrl+D"));
@@ -314,6 +318,16 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *event)
 
 void MainWindow::dropEvent(QDropEvent *event)
 {
+    // PDFs go to the import window; .txt files load directly as before
+    QStringList pdfs;
+    for (const QUrl &url : event->mimeData()->urls())
+        if (url.toLocalFile().endsWith(".pdf", Qt::CaseInsensitive)) pdfs << url.toLocalFile();
+    if (!pdfs.isEmpty()) {
+        event->acceptProposedAction();
+        importPdfs(pdfs);
+        return;
+    }
+
     int matched = 0;
     for (const QUrl &url : event->mimeData()->urls()) {
         const QString path = QDir::toNativeSeparators(url.toLocalFile());
@@ -323,7 +337,7 @@ void MainWindow::dropEvent(QDropEvent *event)
         else if (name.endsWith(".txt")) { questionsEdit->setText(path); matched++; }
     }
     if (matched == 0) {
-        statusBar()->showMessage("Drop .txt files, e.g. syllabus.txt, questions.txt, prereqs.txt", 5000);
+        statusBar()->showMessage("Drop PDFs, or .txt files such as syllabus.txt, questions.txt, prereqs.txt", 5000);
         return;
     }
     event->acceptProposedAction();
@@ -355,10 +369,19 @@ QWidget *MainWindow::buildFileBar()
         r++;
     }
 
+    // Row 4: build the two files above from PDFs
+    auto *pdfHint = new QLabel("Have PDFs? Convert a syllabus PDF and question paper PDFs into the files above.");
+    pdfHint->setWordWrap(true);
+    auto *importButton = new QPushButton("Import PDFs...");
+    connect(importButton, &QPushButton::clicked, this, [this] { importPdfs(); });
+    grid->addWidget(new QLabel("From PDFs"), r, 0);
+    grid->addWidget(pdfHint, r, 1);
+    grid->addWidget(importButton, r, 2);
+
     auto *run = new QPushButton("Run analysis");
     run->setMinimumHeight(64);
     connect(run, &QPushButton::clicked, this, &MainWindow::runAnalysis);
-    grid->addWidget(run, 0, 3, 3, 1);
+    grid->addWidget(run, 0, 3, 4, 1);
     grid->setColumnStretch(1, 1);
     return box;
 }
@@ -555,6 +578,30 @@ void MainWindow::browseInto(QLineEdit *target, const QString &title)
     const QString path = QFileDialog::getOpenFileName(this, title, start,
                                                       "Text files (*.txt);;All files (*)");
     if (!path.isEmpty()) target->setText(QDir::toNativeSeparators(path));
+}
+
+void MainWindow::importPdfs(const QStringList &dropped)
+{
+    PdfImportDialog dialog(this);
+
+    // Dropped files: the one named like "syllabus" is the syllabus, the rest are papers
+    QStringList papers;
+    for (const QString &path : dropped) {
+        if (QFileInfo(path).fileName().contains("syllabus", Qt::CaseInsensitive))
+            dialog.setSyllabusPdf(path);
+        else
+            papers << path;
+    }
+    dialog.addPaperPdfs(papers);
+
+    if (dialog.exec() != QDialog::Accepted) return;
+
+    syllabusEdit->setText(dialog.syllabusTxt());
+    questionsEdit->setText(dialog.questionsTxt());
+    prereqsEdit->clear();   // sample prereqs use other topic names; add your own if needed
+    runAnalysis();
+    statusBar()->showMessage("Loaded from PDFs. Converted files: " +
+                             QFileInfo(dialog.syllabusTxt()).absolutePath(), 8000);
 }
 
 void MainWindow::runAnalysis()

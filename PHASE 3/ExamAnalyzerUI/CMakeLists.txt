@@ -25,9 +25,15 @@ qt_add_executable(ExamAnalyzerUI
     analyzerengine.h analyzerengine.cpp
     prioritychart.h prioritychart.cpp
     graphview.h graphview.cpp
+    pdfconverter.h pdfconverter.cpp
+    pdfimportdialog.h pdfimportdialog.cpp
     ${BACKEND_SOURCES}
 )
 
 target_include_directories(ExamAnalyzerUI PRIVATE ${BACKEND_DIR})
+
+# Path of the Python PDF parser, so the app can find tools/pdf_convert.py
+get_filename_component(TOOLS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../exam_analyzer/tools ABSOLUTE)
+target_compile_definitions(ExamAnalyzerUI PRIVATE EXAMLENS_TOOLS_DIR="${TOOLS_DIR}")
 target_link_libraries(ExamAnalyzerUI PRIVATE Qt6::Widgets)
 set_target_properties(ExamAnalyzerUI PROPERTIES WIN32_EXECUTABLE ON)

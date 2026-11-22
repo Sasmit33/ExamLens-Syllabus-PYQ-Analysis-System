@@ -50,6 +50,36 @@ CMakeLists.txt finds the backend at `../exam_analyzer/src`.
 | Review shortcuts | Review queue | Ctrl+Enter assign, Ctrl+G accept guess, Ctrl+N no topic |
 | Drag and drop | Main window | Drop syllabus.txt / questions.txt / prereqs.txt to load and run |
 | Run shortcut | Ctrl+R | Runs the analysis |
+| Import PDFs | File bar button, toolbar, Ctrl+I, or drop PDFs | Converts a syllabus PDF and question paper PDFs to text, then runs the analysis |
 
 OOP used in the new widgets: both inherit `QWidget` and override virtual event handlers
 (`paintEvent`, `mousePressEvent`, `mouseMoveEvent`, ...) and communicate through signals (`topicClicked`).
+
+## Import PDFs (v3)
+
+The app can start from PDFs instead of hand-written `.txt` files.
+
+1. One-time setup (macOS / Linux):
+   ```
+   python3 -m venv ~/.venvs/examlens
+   ~/.venvs/examlens/bin/pip install -r ../exam_analyzer/tools/requirements.txt
+   ```
+   On Windows: `pip install pdfplumber` (or the same venv steps with `Scripts\pip`).
+2. In the app: **Import PDFs...** (or Ctrl+I, or drag the PDFs onto the window).
+3. Pick the syllabus PDF, add the question papers, check the year next to each paper
+   (guessed from the file name, e.g. `paper_2024.pdf`), then **Convert and analyze**.
+
+How it works:
+
+- `pdfimportdialog.h/.cpp` is the window that collects the PDFs and years.
+- `pdfconverter.h/.cpp` runs `exam_analyzer/tools/pdf_convert.py` with `QProcess`
+  (once for the syllabus, once for all papers) and reads its error message on failure.
+- The converted `syllabus.txt` and `questions.txt` are saved in the app's data folder
+  (shown in the status bar) and loaded through the normal C engine path.
+- Python is found in this order: `EXAMLENS_PYTHON` variable, `~/.venvs/examlens`,
+  then `python3` / `python` / `py`. The first one with pdfplumber is used.
+- Python only converts PDF to text. All analysis stays in C.
+
+Limits: scanned (image-only) PDFs need OCR and show a clear error. A syllabus PDF has
+no keyword lists, so check the topics and add keywords after `|` in the converted file if a
+question maps to the wrong topic.
