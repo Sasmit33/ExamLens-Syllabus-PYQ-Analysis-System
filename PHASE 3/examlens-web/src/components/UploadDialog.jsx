@@ -167,13 +167,13 @@ export default function UploadDialog({ busy, error, onClose, onUpload, onUploadP
                     <span className="block text-sm font-medium">Question papers<span className="text-pen-500"> *</span></span>
                     <span className="block text-xs text-ink-500 dark:text-ink-300">One PDF per year; check each year</span>
                   </span>
-                  <span className={cx('shrink-0 cursor-pointer', button)}>
+                  <label className={cx('shrink-0 cursor-pointer', button)}>
                     Add papers
                     <input
                       type="file" accept=".pdf,application/pdf" multiple className="sr-only"
                       onChange={(e) => { addPapers(e.target.files); e.target.value = ''; }}
                     />
-                  </span>
+                  </label>
                 </div>
 
                 {papers.length > 0 && (
