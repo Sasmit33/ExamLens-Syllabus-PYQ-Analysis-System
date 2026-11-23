@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import http from 'node:http';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,6 +16,8 @@ const UPLOAD_DIR = path.join(WEB_ROOT, 'uploads');
 const HOST = '127.0.0.1';                      
 const PORT = Number(process.env.PORT || 3000);
 const MAX_BODY = 2 * 1024 * 1024;              
+const MAX_PDF_BODY = 40 * 1024 * 1024;          // PDFs arrive base64-encoded, about 4/3 of their size
+const PDF_SCRIPT = path.join(ENGINE_DIR, 'tools', 'pdf_convert.py');
 
 const SAMPLE = {
   questions: path.join(ENGINE_DIR, 'data', 'questions.txt'),
@@ -78,6 +81,88 @@ function runAnalysis() {
   }
 }
 
+// ---------- PDF import: Python only turns PDF into text, the C engine does the analysis ----------
+
+let pythonCache;
+function findPython() {
+  if (pythonCache !== undefined) return pythonCache;
+  const venv = path.join(os.homedir(), '.venvs', 'examlens');
+  const candidates = [
+    process.env.EXAMLENS_PYTHON,
+    path.join(venv, 'bin', 'python3'), path.join(venv, 'bin', 'python'), path.join(venv, 'Scripts', 'python.exe'),
+    'python3', 'python', 'py',
+    '/opt/homebrew/bin/python3', '/usr/local/bin/python3',
+  ].filter(Boolean);
+  let firstWorking = null;
+  for (const exe of candidates) {
+    const probe = spawnSync(exe, ['-c', 'import pdfplumber'], { encoding: 'utf8', timeout: 15_000 });
+    if (probe.error) continue;                                   // not installed at this path
+    if (!firstWorking) firstWorking = exe;
+    if (probe.status === 0) return (pythonCache = exe);           // has pdfplumber
+  }
+  return (pythonCache = firstWorking);                           // script will say how to install pdfplumber
+}
+
+function convertPdf(args) {
+  if (!fs.existsSync(PDF_SCRIPT))
+    return 'PDF parser not found at ' + PDF_SCRIPT + '. Keep examlens-web next to exam_analyzer.';
+  const python = findPython();
+  if (!python) { pythonCache = undefined; return 'Python 3 was not found. Install it, then run: pip install pdfplumber'; }
+  const r = spawnSync(python, [PDF_SCRIPT, ...args], {
+    encoding: 'utf8', timeout: 120_000, env: { ...process.env, PYTHONIOENCODING: 'utf-8' },
+  });
+  if (r.error) return 'Could not run the PDF parser: ' + r.error.message;
+  if (r.status !== 0) {
+    if (/pdfplumber is not installed/.test(r.stderr || '')) pythonCache = undefined;  // check again after install
+    return (r.stderr || '').trim() || 'The PDF parser failed.';
+  }
+  return null;
+}
+
+// Base64 text -> PDF bytes, rejecting anything that is not a PDF.
+function decodePdf(item, label) {
+  if (!item || typeof item.data !== 'string' || !item.data) throw new UserError(`${label} is missing.`);
+  const buf = Buffer.from(item.data, 'base64');
+  if (buf.subarray(0, 5).toString('latin1') !== '%PDF-') throw new UserError(`${label} is not a PDF file.`);
+  return buf;
+}
+
+class UserError extends Error {}
+
+function importPdfs({ syllabus, papers }) {
+  if (!Array.isArray(papers) || papers.length === 0) throw new UserError('Add at least one question paper PDF.');
+  if (papers.length > 20) throw new UserError('Add at most 20 question papers at a time.');
+  for (const p of papers)
+    if (!Number.isInteger(p.year) || p.year < 1900 || p.year > 2100)
+      throw new UserError(`Enter a valid exam year for ${p.name || 'each paper'}.`);
+
+  const pdfDir = path.join(UPLOAD_DIR, 'pdf');
+  fs.rmSync(pdfDir, { recursive: true, force: true });
+  fs.mkdirSync(pdfDir, { recursive: true });
+
+  // Fixed file names: the user's file names are never used as paths.
+  const sylPdf = path.join(pdfDir, 'syllabus.pdf');
+  fs.writeFileSync(sylPdf, decodePdf(syllabus, 'The syllabus PDF'));
+  const paperPdfs = papers.map((p, i) => {
+    const file = path.join(pdfDir, `paper_${i + 1}.pdf`);
+    fs.writeFileSync(file, decodePdf(p, p.name || `Paper ${i + 1}`));
+    return file;
+  });
+
+  // Convert into temporary files first, so a failure never replaces the last good data.
+  const sylTmp = path.join(pdfDir, 'syllabus.txt');
+  const qTmp = path.join(pdfDir, 'questions.txt');
+  let err = convertPdf(['--type', 'syllabus', sylPdf, '-o', sylTmp]);
+  if (err) throw new UserError('Syllabus PDF: ' + err);
+  err = convertPdf(['--type', 'questions', '--year', papers.map((p) => p.year).join(','), ...paperPdfs, '-o', qTmp]);
+  if (err) throw new UserError('Question papers: ' + err);
+
+  fs.copyFileSync(sylTmp, path.join(UPLOAD_DIR, 'syllabus.txt'));
+  fs.copyFileSync(qTmp, path.join(UPLOAD_DIR, 'questions.txt'));
+  for (const f of ['prereqs.txt', 'overrides.txt']) fs.rmSync(path.join(UPLOAD_DIR, f), { force: true });
+  source = 'uploaded';
+}
+
 function saveReview(year, qid, topicName) {
   const file = overridesFile();
   const keep = fs.existsSync(file)
@@ -93,13 +178,13 @@ function saveReview(year, qid, topicName) {
 
 const validField = (v) => typeof v === 'string' && v.trim() !== '' && !/[|\r\n]/.test(v);
 
-function readJson(req) {
+function readJson(req, limit = MAX_BODY) {
   return new Promise((resolve, reject) => {
     let size = 0;
     const chunks = [];
     req.on('data', (c) => {
       size += c.length;
-      if (size > MAX_BODY) { reject(new Error('too large')); req.destroy(); }
+      if (size > limit) { reject(new Error('too large')); req.destroy(); }
       else chunks.push(c);
     });
     req.on('end', () => {
@@ -181,6 +266,13 @@ async function handle(req, res) {
       return send(res, ...runAnalysis());
     }
 
+    if (req.method === 'POST' && pathname === '/api/upload-pdf') {
+      importPdfs(await readJson(req, MAX_PDF_BODY));
+      const [status, data] = runAnalysis();
+      if (status === 200) data.fromPdf = true;
+      return send(res, status, data);
+    }
+
     if (req.method === 'POST' && pathname === '/api/use-sample') {
       source = 'sample';
       return send(res, ...runAnalysis());
@@ -188,7 +280,9 @@ async function handle(req, res) {
 
     return send(res, 404, { error: 'Not found' });
   } catch (err) {
-    return send(res, 400, { error: err.message === 'too large' ? 'Request too large' : 'Invalid request' });
+    if (err instanceof UserError) return send(res, 400, { error: err.message });
+    if (err.message === 'too large') return send(res, 413, { error: 'Files too large (limit about 30 MB in total).' });
+    return send(res, 400, { error: 'Invalid request' });
   }
 }
 

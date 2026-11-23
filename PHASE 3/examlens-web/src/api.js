@@ -29,5 +29,6 @@ export const api = {
   review: (year, qid, topic) => call('/api/review', { year, qid, topic }),
   resetReviews: () => call('/api/reviews/reset', {}),
   upload: (files) => call('/api/upload', files),
+  uploadPdf: (payload) => call('/api/upload-pdf', payload),
   useSample: () => call('/api/use-sample', {}),
 };
