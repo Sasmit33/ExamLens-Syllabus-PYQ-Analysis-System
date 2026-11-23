@@ -91,7 +91,7 @@ export default function App() {
           <div className="ml-auto flex items-center gap-2">
             {busy && <span className="h-4 w-4 animate-spin rounded-full border-2 border-ink-300 border-t-ink-700 dark:border-ink-600 dark:border-t-ink-100" aria-label="Working" />}
             <button
-              onClick={() => setUploadOpen(true)}
+              onClick={() => { setError(''); setUploadOpen(true); }}
               className="rounded-lg bg-ink-800 px-3.5 py-2 text-sm font-medium text-white hover:bg-ink-700 dark:bg-ink-100 dark:text-ink-900 dark:hover:bg-white"
             >
               Load papers
@@ -177,9 +177,14 @@ export default function App() {
 
       {uploadOpen && (
         <UploadDialog
+          busy={busy}
+          error={error}
           onClose={() => setUploadOpen(false)}
           onUpload={async (files) => {
             if (await run(() => api.upload(files), 'Your papers were analysed')) setUploadOpen(false);
+          }}
+          onUploadPdf={async (payload) => {
+            if (await run(() => api.uploadPdf(payload), 'Your PDFs were converted and analysed')) setUploadOpen(false);
           }}
           onSample={async () => {
             if (await run(api.useSample, 'Switched to the sample data')) setUploadOpen(false);
