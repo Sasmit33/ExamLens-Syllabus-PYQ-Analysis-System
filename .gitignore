@@ -1,3 +1,12 @@
 build/
 examlens
 *.o
+
+# web app
+node_modules/
+PHASE 3/examlens-web/uploads/
+# compiled C engine (built on each machine)
+PHASE 3/exam_analyzer/exam_analyzer
+PHASE 3/exam_analyzer/exam_analyzer.exe
+PHASE 3/exam_analyzer/data/overrides.txt
+.DS_Store
